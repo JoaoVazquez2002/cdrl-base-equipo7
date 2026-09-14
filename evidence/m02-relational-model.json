@@ -1,0 +1,17 @@
+{
+    "week": "M02 — Modelo relacional, migraciones y consultas",
+    "module": "Modelo Relacional y Pruebas",
+    "status": "Completado",
+    "components": {
+        "migrations": "db/migrations/02-relational-model.sql",
+        "queries": "src/queries/queries.py",
+        "tests": "tests/test_db.py",
+        "documentation": "docs/ADR-002-relational-model.md"
+    },
+    "verification": {
+        "make_verify": "passed",
+        "pytest_status": "9 passed",
+        "commit_sha": "AQUÍ_PEGA_EL_CÓDIGO_SHA_QUE_SACASTE_ANTES"
+    }
+}
+
