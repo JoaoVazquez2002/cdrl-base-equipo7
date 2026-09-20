@@ -7,13 +7,19 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE ROLE read_role;
     CREATE ROLE operation_role;
 
-    -- 2. Asignar permisos estrictos a cada rol
+    -- 2. Asignar permisos a tablas existentes
     GRANT ALL PRIVILEGES ON SCHEMA public TO migration_role;
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO write_role;
     GRANT SELECT ON ALL TABLES IN SCHEMA public TO read_role;
     GRANT SELECT ON ALL TABLES IN SCHEMA public TO operation_role;
 
-    -- 3. Crear los usuarios usando las variables de entorno y asignarles su rol
+    -- 3. Asignar permisos por defecto para tablas futuras (EL PARCHE)
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO write_role;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO write_role;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO read_role;
+    ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES TO operation_role;
+
+    -- 4. Crear los usuarios usando las variables de entorno y asignarles su rol
     CREATE USER "$DB_USER_MIGRATE" WITH PASSWORD '$DB_PASS_MIGRATE';
     GRANT migration_role TO "$DB_USER_MIGRATE";
 

@@ -1,52 +1,44 @@
+import os
 import pytest
 import psycopg2
 from psycopg2 import errors
+from dotenv import load_dotenv
 
-DB_CONFIG = {
-    "dbname": "cdrl",
-    "user": "cdrl_dev",
-    "password": "cdrl_dev_only",
-    "host": "localhost",
-    "port": "5432"
-}
+# Cargar variables del .env local
+load_dotenv()
+
+def get_connection(user_var, pass_var):
+    return psycopg2.connect(
+        dbname=os.getenv("POSTGRES_DB", "cdrl"),
+        user=os.getenv(user_var),
+        password=os.getenv(pass_var),
+        host="localhost",
+        port="5432"
+    )
 
 @pytest.fixture
-def db_connection():
-    conn = psycopg2.connect(**DB_CONFIG)
-    conn.autocommit = True 
+def db_write_conn():
+    # Usamos el rol de escritura que definimos en la configuración
+    conn = get_connection("DB_USER_WRITE", "DB_PASS_WRITE")
+    conn.autocommit = True
     yield conn
     conn.close()
 
-def test_caso_normal_lectura_seed(db_connection):
-    with db_connection.cursor() as cur:
-        cur.execute("SELECT device_id FROM telemetry;")
-        records = cur.fetchall()
-        devices = [record[0] for record in records]
-        assert "sensor-01" in devices, "Falta sensor-01"
-        assert "sensor-02" in devices, "Falta sensor-02"
+def test_caso_normal_con_fixture(db_write_conn):
+    with db_write_conn.cursor() as cur:
+        # Fixture sintético: Insertamos un dato inventado
+        cur.execute("INSERT INTO devices (name, firmware_version) VALUES ('sensor-sintetico-01', '1.0.0') ON CONFLICT DO NOTHING;")
+        cur.execute("SELECT name FROM devices WHERE name = 'sensor-sintetico-01';")
+        assert cur.fetchone()[0] == 'sensor-sintetico-01'
 
-def test_caso_limite_1_temperatura_maxima(db_connection):
-    with db_connection.cursor() as cur:
-        cur.execute(
-            "INSERT INTO telemetry (device_id, timestamp, temperature) VALUES (%s, NOW(), %s)",
-            ("sensor-max", 999.99)
-        )
-        cur.execute("SELECT temperature FROM telemetry WHERE device_id = 'sensor-max';")
-        assert float(cur.fetchone()[0]) == 999.99
+def test_caso_limite_valor_maximo(db_write_conn):
+    with db_write_conn.cursor() as cur:
+        cur.execute("INSERT INTO telemetry_events (device_id, event_type, value) VALUES ((SELECT id FROM devices LIMIT 1), 'TEMP', 9999);")
+        cur.execute("SELECT value FROM telemetry_events WHERE value = 9999;")
+        assert float(cur.fetchone()[0]) == 9999.0
 
-def test_caso_limite_2_temperatura_minima(db_connection):
-    with db_connection.cursor() as cur:
-        cur.execute(
-            "INSERT INTO telemetry (device_id, timestamp, temperature) VALUES (%s, NOW(), %s)",
-            ("sensor-min", -999.99)
-        )
-        cur.execute("SELECT temperature FROM telemetry WHERE device_id = 'sensor-min';")
-        assert float(cur.fetchone()[0]) == -999.99
-
-def test_fallo_declarado_valor_nulo(db_connection):
-    with db_connection.cursor() as cur:
-        with pytest.raises(errors.NotNullViolation):
-            cur.execute(
-                "INSERT INTO telemetry (device_id, timestamp, temperature) VALUES (%s, NOW(), %s)",
-                (None, 25.00) 
-            )
+def test_fallo_declarado_invariante(db_write_conn):
+    with db_write_conn.cursor() as cur:
+        # Falla intencionalmente porque -300 es menor al límite físico de -273.15
+        with pytest.raises(errors.CheckViolation):
+            cur.execute("INSERT INTO telemetry_events (device_id, event_type, value) VALUES ((SELECT id FROM devices LIMIT 1), 'TEMP', -300);")
