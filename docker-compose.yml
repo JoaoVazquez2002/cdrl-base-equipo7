@@ -5,10 +5,19 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-cdrl}
       POSTGRES_USER: ${POSTGRES_USER:-cdrl_dev}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cdrl_dev_only}
+      DB_USER_MIGRATE: ${DB_USER_MIGRATE}
+      DB_PASS_MIGRATE: ${DB_PASS_MIGRATE}
+      DB_USER_WRITE: ${DB_USER_WRITE}
+      DB_PASS_WRITE: ${DB_PASS_WRITE}
+      DB_USER_READ: ${DB_USER_READ}
+      DB_PASS_READ: ${DB_PASS_READ}
+      DB_USER_OP: ${DB_USER_OP}
+      DB_PASS_OP: ${DB_PASS_OP}
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations/00-roles.sh:/docker-entrypoint-initdb.d/00-roles.sh:ro
       - ./db/migrations/01-init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
       - ./db/migrations/02-relational-model.sql:/docker-entrypoint-initdb.d/02-relational-model.sql:ro
       - ./db/seed/02-seed.sql:/docker-entrypoint-initdb.d/03-seed.sql:ro
