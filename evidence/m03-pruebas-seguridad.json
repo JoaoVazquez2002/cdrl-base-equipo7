@@ -1,0 +1,13 @@
+{
+    "week": "M03 - Pruebas Unitarias y Seguridad",
+    "module": "Configuración de Entorno y Pruebas",
+    "status": "Completado",
+    "components": {
+        "migrations": "db/migrations/00-roles.sh",
+        "tests": "tests/test_seguridad.py",
+        "documentation": "docs/ADR-003-roles-privilegios.md"
+    },
+    "verification": {
+        "pytest_status": "passed"
+    }
+}
