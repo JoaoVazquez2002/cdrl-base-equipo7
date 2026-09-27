@@ -1,0 +1,21 @@
+{
+  "commit": "630963a9d38a2bd7b357e2dfa332cbd8e5adadc2",
+  "commands": [
+    "make setup",
+    "make verify",
+    "make run"
+  ],
+  "selectedStore": "document",
+  "results": {
+    "tests": "passed",
+    "artifacts": "artifacts/test_results.xml"
+  },
+  "assumptions": [
+    "El volumen de 250,000 eventos diarios requiere separar la telemetría operativa del motor relacional",
+    "Los eventos tienen estructura variable, requiriendo un esquema dinámico tipo Document Store (MongoDB)"
+  ],
+  "limitations": [
+    "Aumento en la complejidad operativa al mantener dos motores de bases de datos simultáneos",
+    "Pérdida de integridad referencial nativa; las consultas cruzadas requerirán uniones a nivel de aplicación (backend)"
+  ]
+}
