@@ -27,14 +27,17 @@ services:
       timeout: 5s
       retries: 10
 
-  dynamodb:
-    image: amazon/dynamodb-local:latest
-    command: "-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data"
+  mongodb:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin123}
+      MONGO_INITDB_DATABASE: ${MONGO_DB:-cdrl_nosql}
     ports:
-      - "${DYNAMODB_PORT:-8000}:8000"
+      - "${MONGO_PORT:-27017}:27017"
     volumes:
-      - dynamodb_data:/home/dynamodblocal/data
+      - mongodb_data:/data/db
 
 volumes:
   postgres_data:
-  dynamodb_data:
+  mongodb_data:
