@@ -1,8 +1,12 @@
 .PHONY: setup verify run clean
 
 setup:
+	@echo "=> Preparando entorno para CI..."
+	cp -f .env.example .env
 	@echo "=> Levantando infraestructura de bases de datos..."
 	docker compose up -d
+	@echo "=> Esperando a que los motores esten listos..."
+	sleep 10
 	@echo "=> Creando entorno virtual e instalando dependencias..."
 	python3 -m venv venv
 	./venv/bin/pip install --upgrade pip
@@ -23,3 +27,4 @@ clean:
 	rm -rf venv
 	rm -rf .pytest_cache
 	rm -rf __pycache__
+	rm -f .env
