@@ -1,5 +1,5 @@
 {
-"commitSha": "PENDIENTE_POR_JOAO",
+"commitSha": "4e732f5b58f90ab11b02d123d7fbe1f46bff5623",
 "commands": [
     "make setup",
     "make verify",
