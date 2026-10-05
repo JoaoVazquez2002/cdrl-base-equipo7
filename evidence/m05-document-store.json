@@ -12,6 +12,6 @@
 ],
 "results": {
     "tests": "passed",
-    "artifacts": "artifactstest_results.xml"
+    "artifacts": "artifactstest/test_results.xml"
 }
 }
