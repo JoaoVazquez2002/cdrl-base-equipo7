@@ -1,0 +1,17 @@
+{
+"commitSha": "PENDIENTE_POR_JOAO",
+"commands": [
+    "make setup",
+    "make verify",
+    "make run"
+],
+"validation": "Se aplico jsonSchema requiriendo eventId, type, source, timestamp y payload",
+"indexes": [
+    "eventId (unique) para idempotencia",
+    "type + timestamp (compound) para filtrado por fecha"
+],
+"results": {
+    "tests": "passed",
+    "artifacts": "artifactstest_results.xml"
+}
+}
