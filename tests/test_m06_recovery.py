@@ -6,7 +6,7 @@ def db():
     database = get_db()
     evolucionar_esquema(database)
     yield database
-    database["eventos_operativos"].delete_many({"eventId": {"$regex": "^test\_"}})
+    database["eventos_operativos"].delete_many({"eventId": {"$regex": "^test_"}})
     database["audit_logs"].delete_many({"actorId": "test_actor"})
 
 def test_caso_normal_coexistencia_v1_v2(db):

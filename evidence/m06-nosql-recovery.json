@@ -1,0 +1,19 @@
+{
+  "milestone": "m06-nosql-recovery",
+  "commitSha": "PENDIENTE_SHA",
+  "commands": [
+    "make setup",
+    "make verify",
+    "make run"
+  ],
+  "validation": "collMod usado para evolucionar esquema sin destruir datos antiguos",
+  "idempotency": "Restore utiliza UpdateOne con upsert=True, corrigiendo el problema de duplicados",
+  "results": {
+    "restore": "ok",
+    "audit": "ok",
+    "artifacts": "artifacts/test_results.xml"
+  },
+  "limitations": [
+    "El restore actual lee el archivo JSON en memoria, podría ser un límite para backups mayores a la RAM disponible."
+  ]
+}
