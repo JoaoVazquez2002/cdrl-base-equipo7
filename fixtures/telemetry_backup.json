@@ -1,0 +1,1 @@
+[{"eventId": "evt_v1_001", "type": "temp", "timestamp": "2026-10-01T10:00:00Z"}, {"eventId": "evt_v2_002", "type": "temp", "timestamp": "2026-10-01T10:05:00Z", "schemaVersion": 2, "firmwareVersion": "1.0.4"}]
