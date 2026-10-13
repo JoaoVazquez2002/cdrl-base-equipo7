@@ -1,8 +1,15 @@
 {
+  "milestone": "m06-nosql-recovery",
+  "commitSha": "727396c04b4b4f7ba4e3a67fdae117bc8d99ed79",
   "commands": [
+    "make setup",
+    "make verify",
+    "make run",
     "PYTHONPATH=. ./venv/bin/pytest tests/test_m06_recovery.py -v",
     "sha256sum fixtures/telemetry_backup.json"
   ],
+  "validation": "collMod usado para evolucionar esquema sin destruir datos antiguos",
+  "idempotency": "Restore utiliza UpdateOne con upsert=True, corrigiendo el problema de duplicados",
   "backup": {
     "path": "fixtures/telemetry_backup.json",
     "sha256": "9c655c416777518b10fd2e5971f2b0622ffa93fa9dd5ffe8517686af513cb502"
@@ -22,7 +29,13 @@
     "missing_backup_handling": "passed"
   },
   "results": {
+    "restore": "ok",
+    "audit": "ok",
     "m06_tests": "5 passed",
     "artifacts": "artifacts/test_results.xml"
-  }
+  },
+  "limitations": [
+    "El restore actual lee el archivo JSON en memoria, podría ser un límite para backups mayores a la RAM disponible.",
+    "La recuperación registrada fue idempotente, pero esta medición no demuestra por sí sola una pérdida controlada de datos."
+  ]
 }
