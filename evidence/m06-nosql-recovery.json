@@ -1,0 +1,28 @@
+{
+  "commands": [
+    "PYTHONPATH=. ./venv/bin/pytest tests/test_m06_recovery.py -v",
+    "sha256sum fixtures/telemetry_backup.json"
+  ],
+  "backup": {
+    "path": "fixtures/telemetry_backup.json",
+    "sha256": "9c655c416777518b10fd2e5971f2b0622ffa93fa9dd5ffe8517686af513cb502"
+  },
+  "recovery": {
+    "idempotent": true,
+    "records_in_backup": 2,
+    "records_before": 2,
+    "records_after": 2,
+    "upserted_count": 0,
+    "modified_count": 0,
+    "duration_ms": 15.022,
+    "backup_sha256": "9c655c416777518b10fd2e5971f2b0622ffa93fa9dd5ffe8517686af513cb502"
+  },
+  "security": {
+    "nested_secret_sanitization": "passed",
+    "missing_backup_handling": "passed"
+  },
+  "results": {
+    "m06_tests": "5 passed",
+    "artifacts": "artifacts/test_results.xml"
+  }
+}

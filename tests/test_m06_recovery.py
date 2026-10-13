@@ -6,7 +6,7 @@ def db():
     database = get_db()
     evolucionar_esquema(database)
     yield database
-    database["eventos_operativos"].delete_many({"eventId": {"$regex": "^test\_"}})
+    database["eventos_operativos"].delete_many({"eventId": {"$regex": "^test_"}})
     database["audit_logs"].delete_many({"actorId": "test_actor"})
 
 def test_caso_normal_coexistencia_v1_v2(db):
@@ -34,3 +34,27 @@ def test_fallo_declarado_archivo_inexistente(db):
         recuperar_desde_fixture(db, "fixtures/no_existe.json")
     log = db["audit_logs"].find_one({"action": "RESTORE", "result": "FAILED"})
     assert log is not None
+
+
+def test_sanitizacion_secreta_anidada(db):
+    auditar_operacion(
+        db,
+        "test_actor",
+        "RESTORE",
+        "evt",
+        "SUCCESS",
+        {
+            "metadata": {
+                "password": "no_debe_guardarse",
+                "token": "token_privado"
+            }
+        }
+    )
+
+    log = db["audit_logs"].find_one(
+        {"actorId": "test_actor", "action": "RESTORE"},
+        sort=[("_id", -1)]
+    )
+
+    assert log["details"]["metadata"]["password"] == "***** [SANITIZED] *****"
+    assert log["details"]["metadata"]["token"] == "***** [SANITIZED] *****"

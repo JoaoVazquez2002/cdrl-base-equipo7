@@ -17,7 +17,9 @@ def coleccion_eventos():
 
     yield coleccion
 
-    coleccion.delete_many({})
+    coleccion.delete_many({
+        "eventId": {"$in": ["evt_001", "evt_002"]}
+    })
     cliente.close()
 
 
@@ -31,7 +33,6 @@ def test_caso_normal_insercion_valida(coleccion_eventos):
     }
 
     resultado = coleccion_eventos.insert_one(evento)
-
     assert resultado.inserted_id is not None
 
 
@@ -51,10 +52,7 @@ def test_caso_limite_duplicado_idempotencia(coleccion_eventos):
 
 
 def test_caso_limite_ausencia_datos(coleccion_eventos):
-    resultado = coleccion_eventos.find_one(
-        {"eventId": "falso"}
-    )
-
+    resultado = coleccion_eventos.find_one({"eventId": "falso"})
     assert resultado is None
 
 
@@ -63,3 +61,32 @@ def test_fallo_declarado_documento_invalido_rechazado(coleccion_eventos):
 
     with pytest.raises(WriteError):
         coleccion_eventos.insert_one(evento_basura)
+
+
+def test_inicializacion_conserva_eventos_existentes(coleccion_eventos):
+    evento = {
+        "eventId": "evt_preservacion_test",
+        "type": "sensor.alert",
+        "source": "test",
+        "timestamp": "2026-10-13T12:00:00Z",
+        "payload": {"status": "preserve"}
+    }
+
+    coleccion_eventos.replace_one(
+        {"eventId": evento["eventId"]},
+        evento,
+        upsert=True
+    )
+
+    configurar_base_documental()
+
+    conservado = coleccion_eventos.find_one(
+        {"eventId": "evt_preservacion_test"}
+    )
+
+    assert conservado is not None
+    assert conservado["payload"]["status"] == "preserve"
+
+    coleccion_eventos.delete_one(
+        {"eventId": "evt_preservacion_test"}
+    )
