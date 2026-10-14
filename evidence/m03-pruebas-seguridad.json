@@ -4,8 +4,8 @@
     "status": "Completado",
     "commands": [
         "make setup",
-        "make run",
-        "PYTHONPATH=. python3 -m pytest"
+        "make verify",
+        "make run"
     ],
     "components": {
         "migrations": "db/migrations/00-roles.sh",

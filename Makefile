@@ -7,6 +7,8 @@ setup:
 	docker compose up -d
 	@echo "=> Esperando a que los motores esten listos..."
 	sleep 5
+	@echo "=> Provisionando roles y permisos en PostgreSQL..."
+	docker compose exec -T postgres bash /docker-entrypoint-initdb.d/00-roles.sh
 	@echo "=> Ejecutando migraciones y carga inicial de datos en PostgreSQL..."
 	docker compose exec -T postgres psql -U cdrl_dev -d cdrl -f /docker-entrypoint-initdb.d/01-init.sql
 	docker compose exec -T postgres psql -U cdrl_dev -d cdrl -f /docker-entrypoint-initdb.d/02-relational-model.sql
