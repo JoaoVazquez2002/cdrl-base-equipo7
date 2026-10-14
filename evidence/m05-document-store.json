@@ -1,15 +1,15 @@
 {
-"commitSha": "4e732f5b58f90ab11b02d123d7fbe1f46bff5623",
-"commands": [
-    "make setup",
-    "make verify",
-    "make run"
-],
-"validation": "Se aplico jsonSchema requiriendo eventId, type, source, timestamp y payload",
-"indexes": [
-    "eventId (unique) para idempotencia",
-    "type + timestamp (compound) para filtrado por fecha"
-],
+    "commitSha": "47c1750",
+    "commands": [
+        "make setup",
+        "make verify",
+        "make run"
+    ],
+    "validation": "Se aplico jsonSchema requiriendo eventId, type, source, timestamp y payload",
+    "indexes": [
+        "eventId (unique) para idempotencia",
+        "type + timestamp (compound) para filtrado por fecha"
+    ],
     "results": {
         "tests": "passed",
         "artifacts": "artifacts/test_results.xml"

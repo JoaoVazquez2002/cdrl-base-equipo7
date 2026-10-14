@@ -1,5 +1,5 @@
 {
-  "commit": "630963a9d38a2bd7b357e2dfa332cbd8e5adadc2",
+  "commit": "47c1750",
   "commands": [
     "make setup",
     "make verify",

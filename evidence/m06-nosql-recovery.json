@@ -1,6 +1,6 @@
 {
   "milestone": "m06-nosql-recovery",
-  "commitSha": "727396c04b4b4f7ba4e3a67fdae117bc8d99ed79",
+  "commitSha": "47c1750",
   "commands": [
     "make setup",
     "make verify",
