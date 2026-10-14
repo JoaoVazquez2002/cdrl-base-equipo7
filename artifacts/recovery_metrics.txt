@@ -1,0 +1,9 @@
+=== RECOVERY METRICS - CDRL FAULT TOLERANCE SIMULATION ===
+Timestamp: 2026-10-14T16:29:00.206179+00:00
+Registros antes del fallo: 2
+Registros eliminados (falla controlada): 1 (eventId: evt_v1_001)
+Registros durante el fallo: 1
+Registros tras recuperación: 2
+Tiempo de recuperación: 12.181 ms (0.012181 s)
+Consistencia de datos: OK / CONSISTENTE
+Resultado: EXITOSO

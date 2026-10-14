@@ -10,8 +10,8 @@
     "eventId (unique) para idempotencia",
     "type + timestamp (compound) para filtrado por fecha"
 ],
-"results": {
-    "tests": "passed",
-    "artifacts": "artifactstest/test_results.xml"
-}
+    "results": {
+        "tests": "passed",
+        "artifacts": "artifacts/test_results.xml"
+    }
 }

@@ -12,9 +12,6 @@ def configurar_base_documental():
     cliente = MongoClient(URI)
     db = cliente[MONGO_DB]
     
-    if "eventos_operativos" in db.list_collection_names():
-        db.drop_collection("eventos_operativos")
-
     # 1. Esquema de Validación Estricta
     validador = {
         "$jsonSchema": {
@@ -29,13 +26,21 @@ def configurar_base_documental():
             }
         }
     }
-    db.create_collection("eventos_operativos", validator=validador)
+
+    # Conservar eventos existentes: NO borrar la colección (idempotente sin drop_collection)
+    if "eventos_operativos" not in db.list_collection_names():
+        db.create_collection("eventos_operativos", validator=validador)
+    else:
+        try:
+            db.command("collMod", "eventos_operativos", validator=validador)
+        except Exception as e:
+            print(f"=> Aviso al actualizar validador con collMod: {e}")
 
     # 2. Índices para consultas del ADR e Idempotencia
     db.eventos_operativos.create_index("eventId", unique=True)
     db.eventos_operativos.create_index([("type", 1), ("timestamp", -1)])
 
-    print("=> Base documental configurada exitosamente.")
+    print("=> Base documental configurada exitosamente (eventos conservados).")
     cliente.close()
 
 if __name__ == "__main__":
