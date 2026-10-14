@@ -58,15 +58,12 @@ def ejecutar_simulacion():
     pg_ok = verificar_postgres()
     mg_ok = verificar_mongo()
     
-    # Demostración del flujo de recuperación / ingesta
-    try:
-        from src.m06_recovery import get_db, recuperar_desde_fixture
-        db = get_db()
-        print("\n=> Ejecutando simulación de ingesta / recuperación idempotente...")
-        recuperar_desde_fixture(db)
-        print("=> Simulación completada con éxito.")
-    except Exception as e:
-        print(f"=> Estado de simulación adicional: {e}")
+    # Demostración del flujo de pérdida controlada y recuperación
+    from src.m06_recovery import get_db, simular_falla_y_recuperar
+    db = get_db()
+    print("\n=> Ejecutando simulación de falla controlada y recuperación con métricas...")
+    simular_falla_y_recuperar(db)
+    print("=> Simulación completada con éxito.")
         
     print("=" * 60)
     print("=> Sistema CDRL iniciado y operando correctamente.")
