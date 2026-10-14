@@ -15,9 +15,12 @@ def coleccion_eventos():
     cliente = MongoClient(URI)
     coleccion = cliente[MONGO_DB]["eventos_operativos"]
 
+    # Limpiar únicamente los eventos sintéticos de prueba antes y después del test
+    coleccion.delete_many({"eventId": {"$in": ["evt_001", "evt_002"]}})
+
     yield coleccion
 
-    coleccion.delete_many({})
+    coleccion.delete_many({"eventId": {"$in": ["evt_001", "evt_002"]}})
     cliente.close()
 
 

@@ -18,6 +18,7 @@ setup:
 	./venv/bin/pip install --upgrade pip
 	./venv/bin/pip install -r requirements.txt
 	@echo "=> Inicializando datos y esquemas de forma idempotente..."
+	PYTHONPATH=. ./venv/bin/python src/init_mongo.py
 	PYTHONPATH=. ./venv/bin/python src/m06_recovery.py setup
 	@echo "=> Setup completado."
 
@@ -27,8 +28,8 @@ verify:
 	PYTHONPATH=. ./venv/bin/pytest tests/ -v --junitxml=artifacts/test_results.xml
 
 run:
-	@echo "=> Ejecutando simulacro de fallo y recuperacion..."
-	PYTHONPATH=. ./venv/bin/python src/m06_recovery.py demo
+	@echo "=> Ejecutando ruta crítica y simulador del sistema CDRL..."
+	PYTHONPATH=. ./venv/bin/python src/main.py
 
 clean:
 	@echo "=> Limpiando entorno..."
