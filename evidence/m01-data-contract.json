@@ -1,20 +1,20 @@
 {
-"assignmentId": "m01-data-contract",
-"commitSha": "7baaa982d4ed803c994054e4af17394652b36fbd",
-"commands": [
-"make setup",
-"make verify",
-"make run"
-],
-"results": {
-"starterBase": "validado_por_equipo"
-},
-"assumptions": [
-"El equipo utilizará Python para el desarrollo de la API y pruebas automáticas.",
-"AWS Academy Learner Lab se usará solo si el servicio está habilitado.",
-"El entorno local usa Docker Compose como respaldo reproducible."
-],
-"limitations": [
-"La base inicial sirve para verificar estructura, no es la solución terminada."
-]
+    "assignmentId": "m01-data-contract",
+    "commitSha": "11e341d894185ecd740ddd2b15f7ca1cba201609",
+    "commands": [
+        "make setup",
+        "make verify",
+        "make run"
+    ],
+    "results": {
+        "starterBase": "validado_por_equipo"
+    },
+    "assumptions": [
+        "El equipo utilizará Python para el desarrollo de la API y pruebas automáticas.",
+        "AWS Academy Learner Lab se usará solo si el servicio está habilitado.",
+        "El entorno local usa Docker Compose como respaldo reproducible."
+    ],
+    "limitations": [
+        "La base inicial sirve para verificar estructura, no es la solución terminada."
+    ]
 }
