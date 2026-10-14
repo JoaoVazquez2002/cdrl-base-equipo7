@@ -7,6 +7,10 @@ setup:
 	docker compose up -d
 	@echo "=> Esperando a que los motores esten listos..."
 	sleep 5
+	@echo "=> Ejecutando migraciones y carga inicial de datos en PostgreSQL..."
+	docker compose exec -T postgres psql -U cdrl_dev -d cdrl -f /docker-entrypoint-initdb.d/01-init.sql
+	docker compose exec -T postgres psql -U cdrl_dev -d cdrl -f /docker-entrypoint-initdb.d/02-relational-model.sql
+	docker compose exec -T postgres psql -U cdrl_dev -d cdrl -f /docker-entrypoint-initdb.d/03-seed.sql
 	@echo "=> Creando entorno virtual e instalando dependencias..."
 	python3 -m venv venv
 	./venv/bin/pip install --upgrade pip
