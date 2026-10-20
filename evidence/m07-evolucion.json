@@ -1,0 +1,37 @@
+{
+  "milestone": "m07-evolucion",
+  "commitSha": "PENDING_COMMIT_SHA",
+  "commands": [
+    "make setup",
+    "PYTHONPATH=. ./venv/bin/python src/m07_evolucion.py migrate",
+    "PYTHONPATH=. ./venv/bin/pytest tests/test_m07_evolucion.py -v",
+    "PYTHONPATH=. ./venv/bin/python src/m07_evolucion.py rollback",
+    "PYTHONPATH=. ./venv/bin/pytest tests/test_m07_evolucion.py -k test_rollback -v",
+    "make verify",
+    "make run"
+  ],
+  "configuration": {
+    "fixture_env_var": "FIXTURE_EVOLUTION_PATH",
+    "fixture_path_default": "fixtures/telemetry_evolution.json",
+    "sanitized_data": true
+  },
+  "strategy": {
+    "pattern": "Expand-Contract (Dual-Read)",
+    "schema_versioning": "schemaVersion numérico incremental (v1 implícito -> v2 explícito)",
+    "backward_compatibility": "Lectura dual: consumidores v1 leen documentos v1 y v2 sin errores durante la transición",
+    "idempotency": "Operaciones UpdateMany con filtro de discriminación para reejecución sin duplicados",
+    "rollback": "Procedimiento de reversión comprobado para restaurar esquema y documentos a v1"
+  },
+  "results": {
+    "migration": "pending",
+    "backward_compatibility": "pending",
+    "rollback": "pending",
+    "test_suite": "pending",
+    "artifacts": "artifacts/test_results.xml"
+  },
+  "limitations": [
+    "La compatibilidad de lectura dual se garantiza a nivel de la colección 'eventos_operativos'.",
+    "La eliminación definitiva de campos deprecados (fase Contract) se posterga hasta el retiro total de consumidores v1.",
+    "No se incluyen credenciales ni tokens en los fixtures; todas las conexiones se inyectan por variables de entorno."
+  ]
+}
