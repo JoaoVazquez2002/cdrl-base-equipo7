@@ -1,0 +1,79 @@
+[
+  {
+    "eventId": "evt_synth_v1_001",
+    "type": "telemetry",
+    "source": "sensor-alpha-01",
+    "timestamp": "2026-10-15T08:00:00Z",
+    "payload": {
+      "temperature": 21.4
+    }
+  },
+  {
+    "eventId": "evt_synth_v1_002",
+    "type": "telemetry",
+    "source": "sensor-beta-02",
+    "timestamp": "2026-10-15T08:05:00Z",
+    "payload": {
+      "temperature": 23.8
+    }
+  },
+  {
+    "eventId": "evt_synth_v1_003",
+    "type": "humidity",
+    "source": "sensor-gamma-03",
+    "timestamp": "2026-10-15T08:10:00Z",
+    "payload": {
+      "humidity": 55.0
+    }
+  },
+  {
+    "eventId": "evt_synth_v2_101",
+    "type": "telemetry",
+    "source": "sensor-alpha-01",
+    "timestamp": "2026-10-15T08:15:00Z",
+    "schemaVersion": 2,
+    "firmwareVersion": "v2.1.0-lts",
+    "status": "OPERATIONAL",
+    "payload": {
+      "temperature": 22.0,
+      "metrics": {
+        "temperature": 22.0,
+        "unit": "celsius",
+        "humidity": 45.0
+      }
+    }
+  },
+  {
+    "eventId": "evt_synth_v2_102",
+    "type": "telemetry",
+    "source": "sensor-beta-02",
+    "timestamp": "2026-10-15T08:20:00Z",
+    "schemaVersion": 2,
+    "firmwareVersion": "v2.1.0-lts",
+    "status": "MAINTENANCE",
+    "payload": {
+      "temperature": 29.5,
+      "metrics": {
+        "temperature": 29.5,
+        "unit": "celsius",
+        "humidity": 68.0
+      }
+    }
+  },
+  {
+    "eventId": "evt_synth_v2_103",
+    "type": "humidity",
+    "source": "sensor-gamma-03",
+    "timestamp": "2026-10-15T08:25:00Z",
+    "schemaVersion": 2,
+    "firmwareVersion": "v2.2.0-rc1",
+    "status": "OPERATIONAL",
+    "payload": {
+      "humidity": 58.2,
+      "metrics": {
+        "humidity": 58.2,
+        "unit": "percent"
+      }
+    }
+  }
+]
