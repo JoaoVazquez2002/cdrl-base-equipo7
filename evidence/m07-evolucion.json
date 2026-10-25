@@ -1,6 +1,6 @@
 {
   "milestone": "m07-evolucion",
-  "commitSha": "PENDING_COMMIT_SHA",
+  "commitSha": "e4eef5665eff930ee498d02658d93ca78bff8630",
   "commands": [
     "make setup",
     "PYTHONPATH=. ./venv/bin/python src/m07_evolucion.py migrate",
