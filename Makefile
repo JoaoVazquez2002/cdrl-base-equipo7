@@ -20,16 +20,21 @@ setup:
 	@echo "=> Inicializando datos y esquemas de forma idempotente..."
 	PYTHONPATH=. ./venv/bin/python src/init_mongo.py
 	PYTHONPATH=. ./venv/bin/python src/m06_recovery.py setup
+	PYTHONPATH=. ./venv/bin/python src/m07_migration.py migrate
 	@echo "=> Setup completado."
 
 verify:
 	@echo "=> Ejecutando pruebas automatizadas y generando XML en artifacts/..."
 	mkdir -p artifacts
+	PYTHONPATH=. ./venv/bin/pytest tests/test_m07_evolucion.py -v --junitxml=artifacts/m07_tests.xml
 	PYTHONPATH=. ./venv/bin/pytest tests/ -v --junitxml=artifacts/test_results.xml
 
 run:
 	@echo "=> Ejecutando ruta crítica y simulador del sistema CDRL..."
 	PYTHONPATH=. ./venv/bin/python src/main.py
+	@echo "=> Comprobando ciclo de rollback y re-migración segura..."
+	PYTHONPATH=. ./venv/bin/python src/m07_migration.py rollback
+	PYTHONPATH=. ./venv/bin/python src/m07_migration.py migrate
 
 clean:
 	@echo "=> Limpiando entorno..."

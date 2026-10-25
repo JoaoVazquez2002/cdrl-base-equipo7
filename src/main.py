@@ -64,6 +64,13 @@ def ejecutar_simulacion():
     print("\n=> Ejecutando simulación de falla controlada y recuperación con métricas...")
     simular_falla_y_recuperar(db)
     print("=> Simulación completada con éxito.")
+
+    # Demostración de migración compatible v1 -> v2 (M07)
+    from src.m07_migration import evolucionar_esquema_v2, migrar_documentos_v2
+    print("\n=> Ejecutando verificación de esquema y migración compatible (M07)...")
+    evolucionar_esquema_v2(db)
+    migrar_documentos_v2(db)
+    print("=> Migración compatible v1 -> v2 verificada.")
         
     print("=" * 60)
     print("=> Sistema CDRL iniciado y operando correctamente.")
