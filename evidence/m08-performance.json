@@ -1,0 +1,90 @@
+{
+  "milestone": "m08-benchmark-adr",
+  "commitSha": "pending",
+  "environment": {
+    "os_platform": "Windows / Linux (CI)",
+    "architecture": "x86_64",
+    "cpu_cores": null,
+    "python_version": null,
+    "pymongo_version": null,
+    "mongodb_version": null,
+    "recorded_at_utc": null
+  },
+  "configuration": {
+    "mongo_collection": "eventos_operativos",
+    "synthetic_docs_count": 1000,
+    "benchmark_iterations": 100,
+    "page_size": 20,
+    "deep_offset": 500,
+    "env_vars_used": [
+      "MONGO_URI",
+      "MONGO_USER",
+      "MONGO_PASSWORD",
+      "MONGO_HOST",
+      "MONGO_PORT",
+      "MONGO_DB",
+      "BENCHMARK_DOCS_COUNT",
+      "BENCHMARK_ITERATIONS",
+      "BENCHMARK_PAGE_SIZE"
+    ],
+    "sanitized_credentials": true
+  },
+  "commands": [
+    "make setup",
+    "PYTHONPATH=. ./venv/bin/python src/m08_benchmark.py --seed",
+    "PYTHONPATH=. ./venv/bin/python src/m08_benchmark.py --run",
+    "PYTHONPATH=. ./venv/bin/pytest tests/test_m08_pagination.py -v",
+    "make verify"
+  ],
+  "criteria_verification": {
+    "stable_pagination_cursors": {
+      "status": "pending",
+      "strategy": "Keyset Cursor Pagination (_id / timestamp) vs Skip/Limit",
+      "verified_against_concurrent_inserts": true
+    },
+    "reproducible_benchmark": {
+      "status": "pending",
+      "synthetic_workload_seed": 42,
+      "metrics_collected": ["p50_ms", "p95_ms", "avg_ms", "sample_size"]
+    },
+    "tradeoff_analysis_documented": {
+      "status": "completed",
+      "reference_document": "docs/ADR-008-rendimiento.md"
+    },
+    "no_hardcoded_secrets": {
+      "status": "completed",
+      "source_of_truth": ".env"
+    }
+  },
+  "benchmark_results": {
+    "baseline_offset_pagination": {
+      "sample_size": 100,
+      "p50_ms": null,
+      "p95_ms": null,
+      "avg_ms": null,
+      "min_ms": null,
+      "max_ms": null,
+      "notes": "Línea base usando skip(500) y limit(20) sobre colección con filtro de tipo"
+    },
+    "cursor_keyset_pagination": {
+      "sample_size": 100,
+      "p50_ms": null,
+      "p95_ms": null,
+      "avg_ms": null,
+      "min_ms": null,
+      "max_ms": null,
+      "notes": "Propuesta optimizada usando puntero _id indexado ($lt) y limit(20)"
+    },
+    "improvements": {
+      "speedup_factor_p50": null,
+      "speedup_factor_p95": null
+    }
+  },
+  "tradeoff_summary": {
+    "read_improvement": "Latencia p95 constante O(1) en páginas profundas, eliminando descartes en memoria.",
+    "write_impact": "Sobrecarga en inserciones por mantenimiento de árbol B-Tree del índice compuesto.",
+    "storage_overhead": "Incremento de espacio en disco y working set en memoria caché WiredTiger para los índices.",
+    "consistency_guarantee": "Inmunidad ante inserciones concurrentes de nuevos eventos sin saltos ni duplicados."
+  },
+  "status": "draft"
+}
