@@ -11,6 +11,7 @@ Valida:
 
 import ast
 import inspect
+from datetime import datetime, timezone
 import pytest
 from bson import ObjectId
 from pymongo import MongoClient
@@ -80,9 +81,16 @@ def test_paginacion_cursor_secuencial(db, limpiar_coleccion):
     """
     coleccion = db["eventos_operativos"]
 
-    # Insertar 5 documentos con orden determinista
+    # Insertar 5 documentos alineados al esquema v2 (timestamp como string ISO 8601)
     docs = [
-        {"eventId": f"test_m08_pagi_{i:02d}", "type": "temperature_reading", "order_idx": i}
+        {
+            "eventId": f"test_m08_pagi_{i:02d}",
+            "type": "temperature_reading",
+            "source": "sensor_test",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "payload": {"valor": 25},
+            "order_idx": i
+        }
         for i in range(5)
     ]
     coleccion.insert_many(docs)
@@ -128,9 +136,16 @@ def test_estabilidad_ante_inserciones_concurrentes(db, limpiar_coleccion):
     """
     coleccion = db["eventos_operativos"]
 
-    # 1. Cargar estado inicial de 4 documentos
+    # 1. Cargar estado inicial de 4 documentos alineados al esquema v2 (timestamp como string ISO 8601)
     iniciales = [
-        {"eventId": f"test_m08_pagi_init_{i}", "type": "benchmark_sensor", "seq": i}
+        {
+            "eventId": f"test_m08_pagi_init_{i}",
+            "type": "benchmark_sensor",
+            "source": "benchmark_test",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "payload": {"seq": i},
+            "seq": i
+        }
         for i in range(4)
     ]
     coleccion.insert_many(iniciales)
@@ -146,10 +161,12 @@ def test_estabilidad_ante_inserciones_concurrentes(db, limpiar_coleccion):
     cursor_p1 = p1["next_cursor"]
 
     # 3. Simulación de INSERCIÓN CONCURRENTE en el sistema
-    # (Un evento nuevo llega al sistema)
     coleccion.insert_one({
         "eventId": "test_m08_pagi_init_concurrente",
         "type": "benchmark_sensor",
+        "source": "benchmark_test",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "payload": {"seq": 999},
         "seq": 999
     })
 
