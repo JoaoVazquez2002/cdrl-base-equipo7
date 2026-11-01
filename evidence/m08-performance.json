@@ -1,6 +1,6 @@
 {
   "milestone": "m08-benchmark-adr",
-  "commitSha": "pending",
+  "commitSha": "8ba93d0359150f1d550f11cbfc529d0600f88db9",
   "environment": {
     "os_platform": "Windows / Linux (CI)",
     "architecture": "x86_64",
@@ -45,7 +45,12 @@
     "reproducible_benchmark": {
       "status": "pending",
       "synthetic_workload_seed": 42,
-      "metrics_collected": ["p50_ms", "p95_ms", "avg_ms", "sample_size"]
+      "metrics_collected": [
+        "p50_ms",
+        "p95_ms",
+        "avg_ms",
+        "sample_size"
+      ]
     },
     "tradeoff_analysis_documented": {
       "status": "completed",
