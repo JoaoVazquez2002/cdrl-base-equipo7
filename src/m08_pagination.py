@@ -79,7 +79,7 @@ def setup_indexes(db, collection_name: str = "eventos_operativos") -> List[str]:
     indices_creados = []
 
     # Índice de idempotencia para inserciones seguras
-    idx_event_id = coleccion.create_index("eventId", unique=True, name="idx_event_id_unique")
+    idx_event_id = coleccion.create_index("eventId", unique=True)
     indices_creados.append(idx_event_id)
 
     # Índice compuesto para consultas filtradas por tipo con ordenamiento ascendente por cursor (_id)
