@@ -1,15 +1,15 @@
-﻿"""
-M├│dulo de Paginaci├│n Estable Basada en Cursores (Keyset Pagination) - M08
+"""
+Módulo de Paginación Estable Basada en Cursores (Keyset Pagination) - M08
 CDRL - Centralized Data Repository
 
-Implementa paginaci├│n documental determinista sobre MongoDB utilizando punteros
+Implementa paginación documental determinista sobre MongoDB utilizando punteros
 de clave (_id / timestamp) en lugar de desplazamiento por offset (skip).
 
 Principios de Arquitectura:
 - Estabilidad ante inserciones: Inmune a desfases o duplicados por escrituras concurrentes.
-- Complejidad O(1): Resuelto por escaneo directo de ├¡ndice sin descartar documentos en memoria.
-- Prohibici├│n estricta de skip(): Cumple la regla de oro para evitar degradaci├│n p95.
-- Gobernanza de entorno: Conexi├│n din├ímica v├¡a os.getenv sin credenciales hardcodeadas.
+- Complejidad O(1): Resuelto por escaneo directo de índice sin descartar documentos en memoria.
+- Prohibición estricta de skip(): Cumple la regla de oro para evitar degradación p95.
+- Gobernanza de entorno: Conexión dinámica vía os.getenv sin credenciales hardcodeadas.
 """
 
 import os
@@ -24,8 +24,8 @@ load_dotenv()
 
 def get_mongo_uri() -> str:
     """
-    Construye la URI de conexi├│n de forma din├ímica a partir de variables de entorno.
-    Garantiza que no existan credenciales hardcodeadas en el c├│digo fuente.
+    Construye la URI de conexión de forma dinámica a partir de variables de entorno.
+    Garantiza que no existan credenciales hardcodeadas en el código fuente.
     """
     uri = os.getenv("MONGO_URI")
     if uri:
@@ -53,7 +53,7 @@ def get_db(db_name: Optional[str] = None):
 def parse_cursor_id(last_id: Union[str, ObjectId]) -> Union[ObjectId, str]:
     """
     Convierte de forma segura un identificador de cursor a ObjectId si tiene
-    el formato hexadecimal est├índar de 24 caracteres, o conserva el valor original.
+    el formato hexadecimal estándar de 24 caracteres, o conserva el valor original.
     """
     if isinstance(last_id, ObjectId):
         return last_id
@@ -66,44 +66,44 @@ def parse_cursor_id(last_id: Union[str, ObjectId]) -> Union[ObjectId, str]:
 
 def setup_indexes(db, collection_name: str = "eventos_operativos") -> List[str]:
     """
-    Crea los ├¡ndices necesarios para respaldar la paginaci├│n por cursores y
-    optimizar las consultas de telemetr├¡a y benchmark sin escaneos completos (COLLSCAN).
+    Crea los índices necesarios para respaldar la paginación por cursores y
+    optimizar las consultas de telemetría y benchmark sin escaneos completos (COLLSCAN).
 
-    ├ìndices configurados:
-    1. _id (├¡ndice ├║nico natural de MongoDB, impl├¡cito).
-    2. eventId (├║nico para idempotencia).
+    Índices configurados:
+    1. _id (índice único natural de MongoDB, implícito).
+    2. eventId (único para idempotencia).
     3. (type, _id) / (type, timestamp, _id): Para consultas filtradas por tipo con ordenamiento estable.
-    4. (timestamp, _id): Para navegaci├│n temporal indexada.
+    4. (timestamp, _id): Para navegación temporal indexada.
     """
     coleccion = db[collection_name]
     indices_creados = []
 
-    # ├ìndice de idempotencia para inserciones seguras
+    # Índice de idempotencia para inserciones seguras
     idx_event_id = coleccion.create_index("eventId", unique=True)
     indices_creados.append(idx_event_id)
 
-    # ├ìndice compuesto para consultas filtradas por tipo con ordenamiento ascendente por cursor (_id)
+    # Índice compuesto para consultas filtradas por tipo con ordenamiento ascendente por cursor (_id)
     idx_type_id = coleccion.create_index(
         [("type", ASCENDING), ("_id", ASCENDING)],
         name="idx_type_asc_id_asc"
     )
     indices_creados.append(idx_type_id)
 
-    # ├ìndice compuesto para consultas filtradas por tipo con orden temporal inverso
+    # Índice compuesto para consultas filtradas por tipo con orden temporal inverso
     idx_type_time_id = coleccion.create_index(
         [("type", ASCENDING), ("timestamp", DESCENDING), ("_id", DESCENDING)],
         name="idx_type_timestamp_id"
     )
     indices_creados.append(idx_type_time_id)
 
-    # ├ìndice para ordenamiento cronol├│gico general con desempate determinista
+    # Índice para ordenamiento cronológico general con desempate determinista
     idx_time_id = coleccion.create_index(
         [("timestamp", DESCENDING), ("_id", DESCENDING)],
         name="idx_timestamp_id"
     )
     indices_creados.append(idx_time_id)
 
-    print(f"=> [setup_indexes] ├ìndices asegurados en '{collection_name}': {indices_creados}")
+    print(f"=> [setup_indexes] Índices asegurados en '{collection_name}': {indices_creados}")
     return indices_creados
 
 
@@ -116,36 +116,36 @@ def paginate_by_cursor(
     operator: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
-    Consulta documentos aplicando Paginaci├│n Estable basada en Cursores (Seek / Keyset Pagination).
+    Consulta documentos aplicando Paginación Estable basada en Cursores (Seek / Keyset Pagination).
 
     REGLA DE ORO:
     - ESTRICTAMENTE PROHIBIDO el uso de `.skip()`.
-    - La posici├│n de la p├ígina se ancla mediante la condici├│n {'_id': {'$gt': last_id}}
-      (o '$lt' seg├║n la direcci├│n del ordenamiento), permitiendo al motor de base de datos
-      acceder en O(1) v├¡a ├¡ndice al siguiente registro sin importar el volumen previo.
+    - La posición de la página se ancla mediante la condición {'_id': {'$gt': last_id}}
+      (o '$lt' según la dirección del ordenamiento), permitiendo al motor de base de datos
+      acceder en O(1) vía índice al siguiente registro sin importar el volumen previo.
 
     Args:
         collection: Instancia de pymongo.collection.Collection a consultar.
         filter_query: Filtro de consulta opcional (ej. {'type': 'temperature_reading'}).
-        last_id: Puntero del ├║ltimo documento de la p├ígina anterior (_id o string hexadecimal).
-        limit: Cantidad de documentos deseados por p├ígina (debe ser > 0).
-        sort_direction: Direcci├│n del ordenamiento (pymongo.ASCENDING o pymongo.DESCENDING).
-        operator: Operador de comparaci├│n para el cursor ('$gt' o '$lt').
-                  Si no se especifica, se determina autom├íticamente:
+        last_id: Puntero del último documento de la página anterior (_id o string hexadecimal).
+        limit: Cantidad de documentos deseados por página (debe ser > 0).
+        sort_direction: Dirección del ordenamiento (pymongo.ASCENDING o pymongo.DESCENDING).
+        operator: Operador de comparación para el cursor ('$gt' o '$lt').
+                  Si no se especifica, se determina automáticamente:
                   - ASCENDING -> '$gt'
                   - DESCENDING -> '$lt'
 
     Returns:
         Diccionario con la estructura:
         {
-            "items": List[Dict[str, Any]],       # Documentos de la p├ígina actual
-            "next_cursor": Optional[str],        # Puntero para solicitar la p├ígina siguiente (o None)
-            "has_next": bool,                    # Indica si existen p├íginas posteriores
-            "count": int                         # Cantidad de elementos retornados en la p├ígina
+            "items": List[Dict[str, Any]],       # Documentos de la página actual
+            "next_cursor": Optional[str],        # Puntero para solicitar la página siguiente (o None)
+            "has_next": bool,                    # Indica si existen páginas posteriores
+            "count": int                         # Cantidad de elementos retornados en la página
         }
     """
     if limit <= 0:
-        raise ValueError("El par├ímetro 'limit' debe ser un entero positivo mayor a 0.")
+        raise ValueError("El parámetro 'limit' debe ser un entero positivo mayor a 0.")
 
     # Copia defensiva del filtro base para evitar mutar diccionarios externos
     query: Dict[str, Any] = dict(filter_query) if filter_query else {}
@@ -166,7 +166,7 @@ def paginate_by_cursor(
         else:
             query["_id"] = {op: parsed_id}
 
-    # Se solicita limit + 1 documentos para evaluar si existe una p├ígina siguiente
+    # Se solicita limit + 1 documentos para evaluar si existe una página siguiente
     # sin necesidad de disparar una consulta count_documents() adicional.
     cursor = (
         collection.find(query)
@@ -191,23 +191,23 @@ def paginate_by_cursor(
 
 def main():
     """
-    Ejecuci├│n demostrativa de verificaci├│n r├ípida de la paginaci├│n por cursores.
+    Ejecución demostrativa de verificación rápida de la paginación por cursores.
     """
     db = get_db()
     coleccion = db["eventos_operativos"]
 
-    print("--- Verificaci├│n de Paginaci├│n por Cursor (M08) ---")
+    print("--- Verificación de Paginación por Cursor (M08) ---")
     setup_indexes(db, "eventos_operativos")
 
     total_existente = coleccion.count_documents({})
     print(f"Total de documentos en 'eventos_operativos': {total_existente}")
 
     if total_existente == 0:
-        print("=> Advertencia: La colecci├│n est├í vac├¡a. Ejecuta primero `python src/m08_benchmark.py --seed`.")
+        print("=> Advertencia: La colección está vacía. Ejecuta primero `python src/m08_benchmark.py --seed`.")
         return
 
-    # P├ígina 1 (sin last_id)
-    print("\n=> Solicitando P├ígina 1 (limit=3)...")
+    # Página 1 (sin last_id)
+    print("\n=> Solicitando Página 1 (limit=3)...")
     pagina_1 = paginate_by_cursor(
         collection=coleccion,
         limit=3,
@@ -217,10 +217,10 @@ def main():
         print(f"   [_id: {doc['_id']}] eventId: {doc.get('eventId')} | type: {doc.get('type')}")
     print(f"   -> has_next: {pagina_1['has_next']} | next_cursor: {pagina_1['next_cursor']}")
 
-    # P├ígina 2 (usando next_cursor como last_id)
+    # Página 2 (usando next_cursor como last_id)
     if pagina_1["has_next"]:
         cursor_p1 = pagina_1["next_cursor"]
-        print(f"\n=> Solicitando P├ígina 2 (last_id={cursor_p1}, limit=3)...")
+        print(f"\n=> Solicitando Página 2 (last_id={cursor_p1}, limit=3)...")
         pagina_2 = paginate_by_cursor(
             collection=coleccion,
             last_id=cursor_p1,
