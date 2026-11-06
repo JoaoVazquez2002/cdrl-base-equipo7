@@ -1,0 +1,127 @@
+{
+  "_meta": {
+    "hito": "M09",
+    "semana": 10,
+    "titulo": "Control de Acceso por Colección, Auditoría con Enmascaramiento y Remediación ante Abusos",
+    "adr_referencia": "docs/ADR-009-seguridad.md",
+    "fixture_referencia": "fixtures/m09_audit_payloads.json",
+    "fecha_ejecucion": null,
+    "ejecutado_por": null,
+    "entorno": {
+      "os": null,
+      "python_version": null,
+      "pymongo_version": null,
+      "mongodb_version": null,
+      "docker_compose_version": null
+    }
+  },
+  "criterios_evaluacion": {
+    "C1_accesos_no_autorizados_fallan": {
+      "descripcion": "Las lecturas y escrituras no autorizadas deben fallar con excepción OperationFailure o similar",
+      "estado": "PENDIENTE",
+      "tests_asociados": [
+        "tests/test_m09_seguridad.py::test_reader_no_puede_insertar",
+        "tests/test_m09_seguridad.py::test_reader_no_puede_eliminar",
+        "tests/test_m09_seguridad.py::test_writer_no_puede_leer_audit_log"
+      ],
+      "resultado": null
+    },
+    "C2_auditoria_sin_secretos": {
+      "descripcion": "Los eventos de auditoría incluyen actor, acción, recurso y resultado, pero los campos sensibles aparecen como ***REDACTED***",
+      "estado": "PENDIENTE",
+      "tests_asociados": [
+        "tests/test_m09_seguridad.py::test_audit_log_no_contiene_secrets",
+        "tests/test_m09_seguridad.py::test_mascara_campos_anidados",
+        "tests/test_m09_seguridad.py::test_audit_incluye_campos_requeridos"
+      ],
+      "resultado": null
+    },
+    "C3_remediacion_ante_abuso": {
+      "descripcion": "Tras superar ABUSE_THRESHOLD intentos fallidos en ABUSE_WINDOW_SECONDS segundos, el sistema genera alerta en audit_log y revoca sesiones",
+      "estado": "PENDIENTE",
+      "tests_asociados": [
+        "tests/test_m09_seguridad.py::test_remediacion_bloqueo_tras_abuso"
+      ],
+      "resultado": null
+    },
+    "C4_cero_credenciales_en_codigo": {
+      "descripcion": "Ningún archivo en src/, tests/ o fixtures/ contiene credenciales, tokens o cadenas de conexión reales",
+      "estado": "PENDIENTE",
+      "verificacion_comando": "grep -rn 'password\\|token\\|secret' src/ tests/ --include='*.py' | grep -v 'REDACTED\\|getenv\\|masked_fields\\|fixture_id\\|descripcion'",
+      "resultado": null
+    }
+  },
+  "setup_rbac": {
+    "descripcion": "Creación de roles y usuarios MongoDB con privilegios mínimos",
+    "comando_ejecucion": "python -m src.m09_seguridad setup",
+    "estado": "PENDIENTE",
+    "roles_creados": {
+      "cdrl_reader": null,
+      "cdrl_writer": null,
+      "cdrl_auditor": null
+    },
+    "colecciones_inicializadas": {
+      "eventos_operativos": null,
+      "audit_log": null
+    },
+    "salida_consola": null,
+    "errores": null
+  },
+  "ejecucion_tests": {
+    "comando": "pytest tests/test_m09_seguridad.py -v --tb=short 2>&1 | tee evidence/m09-pytest-output.txt",
+    "estado": "PENDIENTE",
+    "resumen": {
+      "total_tests": null,
+      "passed": null,
+      "failed": null,
+      "errors": null,
+      "duracion_segundos": null
+    },
+    "detalle_por_test": []
+  },
+  "demostracion_abuso": {
+    "descripcion": "Secuencia documentada de operaciones de abuso y activación de remediación",
+    "pasos": [
+      {
+        "paso": 1,
+        "accion": "Ejecutar fixture abuse-op-001: reader intenta insert — debe lanzar OperationFailure",
+        "estado": "PENDIENTE",
+        "outcome_registrado_en_audit": null
+      },
+      {
+        "paso": 2,
+        "accion": "Ejecutar fixture abuse-op-002: reader intenta delete — debe lanzar OperationFailure",
+        "estado": "PENDIENTE",
+        "outcome_registrado_en_audit": null
+      },
+      {
+        "paso": 3,
+        "accion": "Ejecutar fixture abuse-op-003: writer intenta leer audit_log — debe lanzar OperationFailure",
+        "estado": "PENDIENTE",
+        "outcome_registrado_en_audit": null
+      },
+      {
+        "paso": 4,
+        "accion": "Ejecutar fixture abuse-op-004: supera umbral — debe insertar ABUSE_DETECTED en audit_log y revocar sesión",
+        "estado": "PENDIENTE",
+        "documento_abuse_detected_insertado": null,
+        "sesion_revocada": null,
+        "secretos_en_audit": null
+      }
+    ]
+  },
+  "verificacion_enmascaramiento": {
+    "descripcion": "Consulta directa a audit_log para confirmar que ningún documento contiene secretos en texto claro",
+    "comando_mongo_shell": "db.audit_log.find({ $or: [ {'payload.password': {$exists: true}}, {'payload.token': {$exists: true}}, {'payload.api_key': {$exists: true}}, {'payload.secret': {$exists: true}} ] }).count()",
+    "resultado_esperado": 0,
+    "resultado_obtenido": null,
+    "estado": "PENDIENTE"
+  },
+  "conclusiones": {
+    "criterios_cumplidos": [],
+    "criterios_fallidos": [],
+    "observaciones": null,
+    "firma_integrante": "Integrante 1 — Arquitectura de Seguridad",
+    "fecha_cierre": null
+  }
+}
