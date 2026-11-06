@@ -1,0 +1,177 @@
+{
+  "_meta": {
+    "description": "Fixtures sintéticos para el Hito M09. Simulan operaciones válidas y de abuso sobre MongoDB. Los campos sensibles son completamente ficticios y están diseñados para verificar que el sistema de auditoría los enmascare antes de persistirlos.",
+    "schema_version": 1,
+    "generated_for": "tests/test_m09_seguridad.py"
+  },
+  "operaciones_validas": [
+    {
+      "fixture_id": "valid-op-001",
+      "descripcion": "Lectura autorizada: el rol cdrl_reader consulta eventos_operativos",
+      "actor": "usuario_lectura_sintetico",
+      "rol_simulado": "cdrl_reader",
+      "accion": "find",
+      "coleccion": "eventos_operativos",
+      "filtro": { "type": "temperature_reading" },
+      "resultado_esperado": "SUCCESS",
+      "contiene_secreto": false
+    },
+    {
+      "fixture_id": "valid-op-002",
+      "descripcion": "Escritura autorizada: el rol cdrl_writer inserta un nuevo evento operativo",
+      "actor": "usuario_escritura_sintetico",
+      "rol_simulado": "cdrl_writer",
+      "accion": "insert",
+      "coleccion": "eventos_operativos",
+      "documento": {
+        "eventId": "evt-sintetico-m09-001",
+        "type": "temperature_reading",
+        "source": "sensor-sintetico-m09",
+        "timestamp": "2026-11-06T07:00:00Z",
+        "schemaVersion": 2,
+        "payload": {
+          "metrics": { "temperature": 21.5, "humidity": 60 },
+          "status": "nominal"
+        }
+      },
+      "resultado_esperado": "SUCCESS",
+      "contiene_secreto": false
+    },
+    {
+      "fixture_id": "valid-op-003",
+      "descripcion": "Lectura paginada autorizada usando keyset cursor (ADR-008)",
+      "actor": "usuario_lectura_sintetico",
+      "rol_simulado": "cdrl_reader",
+      "accion": "find",
+      "coleccion": "eventos_operativos",
+      "filtro": { "type": "temperature_reading" },
+      "opciones": { "limit": 5, "sort": { "timestamp": -1, "_id": -1 } },
+      "resultado_esperado": "SUCCESS",
+      "contiene_secreto": false
+    },
+    {
+      "fixture_id": "valid-op-004",
+      "descripcion": "El auditor lee el log de auditoría correctamente",
+      "actor": "usuario_auditor_sintetico",
+      "rol_simulado": "cdrl_auditor",
+      "accion": "find",
+      "coleccion": "audit_log",
+      "filtro": { "outcome": "DENIED" },
+      "resultado_esperado": "SUCCESS",
+      "contiene_secreto": false
+    }
+  ],
+  "operaciones_abuso": [
+    {
+      "fixture_id": "abuse-op-001",
+      "descripcion": "Abuso 1/4: rol de solo lectura intenta insertar un documento (no autorizado)",
+      "actor": "actor_abusivo_sintetico",
+      "rol_simulado": "cdrl_reader",
+      "accion": "insert",
+      "coleccion": "eventos_operativos",
+      "documento_intentado": {
+        "eventId": "evt-no-autorizado-001",
+        "type": "intrusion_attempt",
+        "source": "actor_externo",
+        "timestamp": "2026-11-06T07:01:00Z",
+        "payload": {
+          "password": "clave_falsa_1",
+          "token": "eyJfake_jwt_token_para_prueba_de_mascara_AAAA",
+          "admin_override": true
+        }
+      },
+      "resultado_esperado": "DENIED",
+      "contiene_secreto": true,
+      "secretos_presentes": ["password", "token"],
+      "secretos_deben_aparecer_en_audit": false
+    },
+    {
+      "fixture_id": "abuse-op-002",
+      "descripcion": "Abuso 2/4: rol de solo lectura intenta eliminar documentos (no autorizado)",
+      "actor": "actor_abusivo_sintetico",
+      "rol_simulado": "cdrl_reader",
+      "accion": "delete",
+      "coleccion": "eventos_operativos",
+      "filtro_intentado": { "type": "temperature_reading" },
+      "resultado_esperado": "DENIED",
+      "contiene_secreto": false
+    },
+    {
+      "fixture_id": "abuse-op-003",
+      "descripcion": "Abuso 3/4: rol de escritura intenta leer el audit_log (no autorizado)",
+      "actor": "actor_abusivo_sintetico",
+      "rol_simulado": "cdrl_writer",
+      "accion": "find",
+      "coleccion": "audit_log",
+      "filtro_intentado": {},
+      "resultado_esperado": "DENIED",
+      "contiene_secreto": false
+    },
+    {
+      "fixture_id": "abuse-op-004",
+      "descripcion": "Abuso 4/4: supera el umbral de ABUSE_THRESHOLD — debe disparar remediación",
+      "actor": "actor_abusivo_sintetico",
+      "rol_simulado": "cdrl_reader",
+      "accion": "insert",
+      "coleccion": "eventos_operativos",
+      "documento_intentado": {
+        "eventId": "evt-no-autorizado-004",
+        "type": "credential_stuffing",
+        "source": "actor_externo",
+        "timestamp": "2026-11-06T07:01:03Z",
+        "payload": {
+          "password": "otra_clave_falsa_99",
+          "api_key": "FAKE-API-KEY-0000-1111-SINTETICA",
+          "secret": "super_secreto_inventado",
+          "credential": "credencial_falsa_de_prueba"
+        }
+      },
+      "resultado_esperado": "DENIED",
+      "contiene_secreto": true,
+      "secretos_presentes": ["password", "api_key", "secret", "credential"],
+      "secretos_deben_aparecer_en_audit": false,
+      "debe_disparar_remediacion": true
+    }
+  ],
+  "casos_enmascaramiento_directo": [
+    {
+      "fixture_id": "mask-test-001",
+      "descripcion": "Documento con múltiples campos sensibles en raíz — todos deben quedar como ***REDACTED*** en audit_log",
+      "documento_original": {
+        "eventId": "evt-mask-test-001",
+        "tipo": "prueba_enmascaramiento",
+        "password": "clave_falsa_raiz",
+        "token": "fake_bearer_token_1234567890",
+        "api_key": "FAKE-KEY-ABCD-EFGH",
+        "secret": "mi_secreto_inventado",
+        "credential": "credencial_falsa",
+        "passwd": "variante_passwd_falsa",
+        "pwd": "variante_pwd_falsa",
+        "datos_normales": {
+          "temperatura": 23.1,
+          "sensor": "sensor-prueba-m09"
+        }
+      },
+      "campos_que_deben_enmascararse": ["password", "token", "api_key", "secret", "credential", "passwd", "pwd"],
+      "campos_que_deben_conservarse": ["eventId", "tipo", "datos_normales"]
+    },
+    {
+      "fixture_id": "mask-test-002",
+      "descripcion": "Documento con secreto anidado — el enmascaramiento recursivo debe encontrarlo",
+      "documento_original": {
+        "eventId": "evt-mask-test-002",
+        "tipo": "prueba_anidada",
+        "auth_config": {
+          "password": "clave_anidada_falsa",
+          "auth": "token_anidado_falso"
+        },
+        "metadata": {
+          "sensor_id": "sensor-prueba-m09",
+          "region": "zona-test"
+        }
+      },
+      "campos_que_deben_enmascararse": ["auth_config.password", "auth_config.auth"],
+      "campos_que_deben_conservarse": ["eventId", "tipo", "metadata.sensor_id", "metadata.region"]
+    }
+  ]
+}
