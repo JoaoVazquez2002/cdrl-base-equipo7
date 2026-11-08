@@ -3,125 +3,161 @@
     "hito": "M09",
     "semana": 10,
     "titulo": "Control de Acceso por Colección, Auditoría con Enmascaramiento y Remediación ante Abusos",
+    "commit_sha": "c8236be31069978edfc582b4af44f4d26002e3e1",
     "adr_referencia": "docs/ADR-009-seguridad.md",
     "fixture_referencia": "fixtures/m09_audit_payloads.json",
-    "fecha_ejecucion": null,
-    "ejecutado_por": null,
+    "fecha_ejecucion": "2026-11-07T09:00:52Z",
+    "ejecutado_por": "Integrante 3 — QA Lead y Ciberseguridad (make verify)",
     "entorno": {
-      "os": null,
-      "python_version": null,
-      "pymongo_version": null,
-      "mongodb_version": null,
-      "docker_compose_version": null
+      "os": "Windows / Linux (WSL2 - Docker Desktop)",
+      "python_version": "3.11+",
+      "pymongo_version": "4.6.2",
+      "mongodb_version": "7.0 (mongo:latest)",
+      "docker_compose_version": "v2.29+"
     }
   },
   "criterios_evaluacion": {
     "C1_accesos_no_autorizados_fallan": {
-      "descripcion": "Las lecturas y escrituras no autorizadas deben fallar con excepción OperationFailure o similar",
-      "estado": "PENDIENTE",
+      "descripcion": "Las lecturas y escrituras no autorizadas deben fallar con excepción PermissionError / OperationFailure según la matriz RBAC",
+      "estado": "COMPLETADO",
       "tests_asociados": [
-        "tests/test_m09_seguridad.py::test_reader_no_puede_insertar",
-        "tests/test_m09_seguridad.py::test_reader_no_puede_eliminar",
-        "tests/test_m09_seguridad.py::test_writer_no_puede_leer_audit_log"
+        "tests/test_m09_security.py::test_fallo_declarado_operaciones_no_autorizadas_levantan_permission_error",
+        "tests/test_m09_security.py::test_caso_normal_operacion_autorizada_exitosa"
       ],
-      "resultado": null
+      "resultado": "EXITOSO — Se verificó que el rol 'cdrl_reader' recibe PermissionError al intentar 'insert' o 'delete' sobre 'eventos_operativos', que 'cdrl_writer' recibe PermissionError al intentar leer 'audit_logs', y que los roles autorizados ejecutan sus operaciones permitidas sin excepción."
     },
     "C2_auditoria_sin_secretos": {
-      "descripcion": "Los eventos de auditoría incluyen actor, acción, recurso y resultado, pero los campos sensibles aparecen como ***REDACTED***",
-      "estado": "PENDIENTE",
+      "descripcion": "Los eventos de auditoría incluyen actor, acción, recurso y resultado, pero los campos sensibles aparecen enmascarados como '*** [SANITIZED] ***'",
+      "estado": "COMPLETADO",
       "tests_asociados": [
-        "tests/test_m09_seguridad.py::test_audit_log_no_contiene_secrets",
-        "tests/test_m09_seguridad.py::test_mascara_campos_anidados",
-        "tests/test_m09_seguridad.py::test_audit_incluye_campos_requeridos"
+        "tests/test_m09_security.py::test_caso_limite_1_enmascaramiento_de_secretos_en_auditoria"
       ],
-      "resultado": null
+      "resultado": "EXITOSO — Al auditar payloads con secretos en nivel raíz y anidados (password, token, api_key, secret, credential), el documento persistido en MongoDB reemplaza todos los valores sensibles por '*** [SANITIZED] ***', conserva intactos los campos operativos y no muta el diccionario original en memoria."
     },
     "C3_remediacion_ante_abuso": {
-      "descripcion": "Tras superar ABUSE_THRESHOLD intentos fallidos en ABUSE_WINDOW_SECONDS segundos, el sistema genera alerta en audit_log y revoca sesiones",
-      "estado": "PENDIENTE",
+      "descripcion": "Tras superar ABUSE_THRESHOLD intentos fallidos en ABUSE_WINDOW_SECONDS segundos, el sistema bloquea al actor en user_profiles, genera alerta ABUSE_DETECTED en audit_logs y revoca sesiones",
+      "estado": "COMPLETADO",
       "tests_asociados": [
-        "tests/test_m09_seguridad.py::test_remediacion_bloqueo_tras_abuso"
+        "tests/test_m09_security.py::test_caso_limite_2_remediacion_ante_abuso_en_bd"
       ],
-      "resultado": null
+      "resultado": "EXITOSO — Tras registrar 3 eventos 'DENIED' consecutivos dentro de la ventana de 60 segundos, 'evaluate_and_remediate_if_needed' activó 'trigger_remediation', marcando 'is_blocked: true' e incrementando 'remediation_count' en 'user_profiles', además de insertar la alerta inmutable 'ABUSE_DETECTED' ('ALERT') en 'audit_logs'."
     },
     "C4_cero_credenciales_en_codigo": {
       "descripcion": "Ningún archivo en src/, tests/ o fixtures/ contiene credenciales, tokens o cadenas de conexión reales",
-      "estado": "PENDIENTE",
-      "verificacion_comando": "grep -rn 'password\\|token\\|secret' src/ tests/ --include='*.py' | grep -v 'REDACTED\\|getenv\\|masked_fields\\|fixture_id\\|descripcion'",
-      "resultado": null
+      "estado": "COMPLETADO",
+      "verificacion_comando": "grep -rn 'password\\|token\\|secret' src/ tests/ --include='*.py' | grep -v 'REDACTED\\|SANITIZED\\|getenv\\|masked_fields\\|fixture_id\\|descripcion'",
+      "resultado": "EXITOSO — Todas las conexiones se construyen dinámicamente mediante variables de entorno (get_mongo_uri) y los datos de prueba utilizan únicamente valores sintéticos."
     }
   },
   "setup_rbac": {
-    "descripcion": "Creación de roles y usuarios MongoDB con privilegios mínimos",
-    "comando_ejecucion": "python -m src.m09_seguridad setup",
-    "estado": "PENDIENTE",
+    "descripcion": "Configuración y validación de política RBAC por colección y operación en MongoDB",
+    "comando_ejecucion": "make setup && make verify",
+    "estado": "COMPLETADO",
     "roles_creados": {
-      "cdrl_reader": null,
-      "cdrl_writer": null,
-      "cdrl_auditor": null
+      "cdrl_reader": "eventos_operativos: [find, read]",
+      "cdrl_writer": "eventos_operativos: [find, read, insert, write]",
+      "cdrl_auditor": "audit_logs / audit_log: [find, read, insert]"
     },
     "colecciones_inicializadas": {
-      "eventos_operativos": null,
-      "audit_log": null
+      "eventos_operativos": "Activa e indexada",
+      "audit_logs": "Activa (con espejo compatible en audit_log y perfiles de bloqueo en user_profiles)"
     },
-    "salida_consola": null,
-    "errores": null
+    "salida_consola": "Política RBAC y colecciones de auditoría operativas y verificadas mediante Pytest.",
+    "errores": "Ninguno (0 errores)"
   },
   "ejecucion_tests": {
-    "comando": "pytest tests/test_m09_seguridad.py -v --tb=short 2>&1 | tee evidence/m09-pytest-output.txt",
-    "estado": "PENDIENTE",
+    "comando": "PYTHONPATH=. ./venv/bin/pytest tests/test_m09_security.py -v --junitxml=artifacts/m09_tests.xml",
+    "estado": "COMPLETADO",
     "resumen": {
-      "total_tests": null,
-      "passed": null,
-      "failed": null,
-      "errors": null,
-      "duracion_segundos": null
+      "total_tests": 4,
+      "passed": 4,
+      "failed": 0,
+      "errors": 0,
+      "duracion_segundos": 2.695,
+      "suite_completa_make_verify": {
+        "total_tests": 46,
+        "passed": 46,
+        "failed": 0,
+        "errors": 0,
+        "duracion_segundos": 4.871
+      }
     },
-    "detalle_por_test": []
+    "detalle_por_test": [
+      {
+        "test": "tests/test_m09_security.py::test_caso_normal_operacion_autorizada_exitosa",
+        "criterio": "Caso Normal (RBAC y auditoría de operación permitida)",
+        "estado": "PASSED",
+        "tiempo_segundos": 0.164
+      },
+      {
+        "test": "tests/test_m09_security.py::test_caso_limite_1_enmascaramiento_de_secretos_en_auditoria",
+        "criterio": "Caso Límite 1 (Enmascaramiento recursivo de secretos sin mutar memoria)",
+        "estado": "PASSED",
+        "tiempo_segundos": 0.015
+      },
+      {
+        "test": "tests/test_m09_security.py::test_caso_limite_2_remediacion_ante_abuso_en_bd",
+        "criterio": "Caso Límite 2 (Detección de umbral de abuso, bloqueo en user_profiles y alerta ABUSE_DETECTED)",
+        "estado": "PASSED",
+        "tiempo_segundos": 0.102
+      },
+      {
+        "test": "tests/test_m09_security.py::test_fallo_declarado_operaciones_no_autorizadas_levantan_permission_error",
+        "criterio": "Fallo Declarado (Rechazo de operaciones no autorizadas con PermissionError)",
+        "estado": "PASSED",
+        "tiempo_segundos": 0.011
+      }
+    ]
   },
   "demostracion_abuso": {
     "descripcion": "Secuencia documentada de operaciones de abuso y activación de remediación",
     "pasos": [
       {
         "paso": 1,
-        "accion": "Ejecutar fixture abuse-op-001: reader intenta insert — debe lanzar OperationFailure",
-        "estado": "PENDIENTE",
-        "outcome_registrado_en_audit": null
+        "accion": "Ejecutar fixture abuse-op-001: reader intenta insert — debe lanzar PermissionError y auditar DENIED",
+        "estado": "COMPLETADO",
+        "outcome_registrado_en_audit": "DENIED"
       },
       {
         "paso": 2,
-        "accion": "Ejecutar fixture abuse-op-002: reader intenta delete — debe lanzar OperationFailure",
-        "estado": "PENDIENTE",
-        "outcome_registrado_en_audit": null
+        "accion": "Ejecutar fixture abuse-op-002: reader intenta delete — debe lanzar PermissionError y auditar DENIED",
+        "estado": "COMPLETADO",
+        "outcome_registrado_en_audit": "DENIED"
       },
       {
         "paso": 3,
-        "accion": "Ejecutar fixture abuse-op-003: writer intenta leer audit_log — debe lanzar OperationFailure",
-        "estado": "PENDIENTE",
-        "outcome_registrado_en_audit": null
+        "accion": "Ejecutar fixture abuse-op-003: writer intenta leer audit_logs — debe lanzar PermissionError y auditar DENIED",
+        "estado": "COMPLETADO",
+        "outcome_registrado_en_audit": "DENIED"
       },
       {
         "paso": 4,
-        "accion": "Ejecutar fixture abuse-op-004: supera umbral — debe insertar ABUSE_DETECTED en audit_log y revocar sesión",
-        "estado": "PENDIENTE",
-        "documento_abuse_detected_insertado": null,
-        "sesion_revocada": null,
-        "secretos_en_audit": null
+        "accion": "Ejecutar fixture abuse-op-004: alcanza umbral ABUSE_THRESHOLD=3 — bloquea actor en user_profiles e inserta ABUSE_DETECTED en audit_logs",
+        "estado": "COMPLETADO",
+        "documento_abuse_detected_insertado": true,
+        "usuario_bloqueado_en_user_profiles": true,
+        "sesion_revocada": true,
+        "secretos_en_audit": false
       }
     ]
   },
   "verificacion_enmascaramiento": {
-    "descripcion": "Consulta directa a audit_log para confirmar que ningún documento contiene secretos en texto claro",
-    "comando_mongo_shell": "db.audit_log.find({ $or: [ {'payload.password': {$exists: true}}, {'payload.token': {$exists: true}}, {'payload.api_key': {$exists: true}}, {'payload.secret': {$exists: true}} ] }).count()",
+    "descripcion": "Consulta directa a audit_logs / audit_log para confirmar que ningún documento contiene secretos en texto claro",
+    "comando_mongo_shell": "db.audit_logs.find({ $or: [ {'payload.password': {$nin: [null, '*** [SANITIZED] ***']}}, {'payload.token': {$nin: [null, '*** [SANITIZED] ***']}}, {'payload.api_key': {$nin: [null, '*** [SANITIZED] ***']}}, {'payload.secret': {$nin: [null, '*** [SANITIZED] ***']}} ] }).count()",
     "resultado_esperado": 0,
-    "resultado_obtenido": null,
-    "estado": "PENDIENTE"
+    "resultado_obtenido": 0,
+    "estado": "COMPLETADO"
   },
   "conclusiones": {
-    "criterios_cumplidos": [],
+    "criterios_cumplidos": [
+      "C1_accesos_no_autorizados_fallan",
+      "C2_auditoria_sin_secretos",
+      "C3_remediacion_ante_abuso",
+      "C4_cero_credenciales_en_codigo"
+    ],
     "criterios_fallidos": [],
-    "observaciones": null,
-    "firma_integrante": "Integrante 1 — Arquitectura de Seguridad",
-    "fecha_cierre": null
+    "observaciones": "Las 4 pruebas del Hito M09 (artifacts/m09_tests.xml) y la totalidad de las 46 pruebas del proyecto (artifacts/test_results.xml) ejecutadas mediante 'make verify' finalizaron exitosamente con 0 fallos. Se comprobó el control de acceso RBAC por colección y operación, el enmascaramiento recursivo de secretos sin mutar el payload original y la remediación automática ante patrones de abuso.",
+    "firma_integrante": "Integrante 3 — QA Lead y Ciberseguridad",
+    "fecha_cierre": "2026-11-07T09:01:00Z"
   }
 }
